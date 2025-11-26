@@ -81,7 +81,7 @@ def show_inicial():
         print_cmd("No se ha podido cargar ningun show")
         show_iniciado = 1
 
-    print_cmd("PERAMESA v2.0")
+    print_cmd("PERAMESA v3.0")
 
 
 def show_name_update():
@@ -1408,7 +1408,7 @@ class Mesa:
         super().__init__()
         """ Inicializa la mesa """
         # Creamos ventana principal
-        root.title("Peramesa v2.0")
+        root.title("Peramesa v3.0")
         root.minsize(width=1330, height=820)  # Tamaño minimo principal
         root.configure(bg=color_fondos)
 
@@ -1522,7 +1522,7 @@ class Mesa:
         help_w = tk.Toplevel(root)  # Crea ventana
         help_w.geometry('800x800')
         help_w.resizable(width=0, height=0)
-        help_w.title("Help Peramesa v1.0")
+        help_w.title("Help Peramesa v3.0")
 
         h_scroll = tk.Scrollbar(help_w)  # Crea scrollbar
         h_scroll.pack(side=tk.RIGHT,
