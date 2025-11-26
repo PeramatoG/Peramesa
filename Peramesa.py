@@ -349,7 +349,7 @@ def send_values():
                     thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_value)
                     thesend = send - 1
 
-                    if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute == "ON":  # Enciende canal
+                    if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute == "ON":  # Enciende canal
                         string_fad_on = "set MIXER:Current/InCh/ToMix/On {} {} 1\n".format(ch, thesend)
                         sock.sendall(string_fad_on.encode())
 
