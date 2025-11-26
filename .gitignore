@@ -1,0 +1,21 @@
+# Entorno virtual
+.venv/
+
+# Cachés de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+
+# Builds / distribuciones
+build/
+dist/
+*.egg-info/
+Peramesa.app/
+
+# Archivos de trabajo del programa
+backup.csv
+temp_cues.csv
