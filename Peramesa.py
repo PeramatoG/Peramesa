@@ -259,9 +259,26 @@ def listen():
     dispatcher = Dispatcher()
     dispatcher.set_default_handler(default_handler)
 
-    server = BlockingOSCUDPServer((host_osc, port_osc), dispatcher)
-    server.serve_forever()  # Blocks forever
+    try:
+        # Intentar abrir el servidor OSC en host_osc:port_osc
+        server = BlockingOSCUDPServer((host_osc, port_osc), dispatcher)
+    except PermissionError as e:
+        # Error típico de permisos / firewall / puerto prohibido
+        print_cmd(f"OSC ERROR: no se ha podido abrir {host_osc}:{port_osc}")
+        print_cmd(f"OSC ERROR detalle: {e}")
+        return
+    except OSError as e:
+        # Otros errores de socket (IP no válida, puerto en uso, etc.)
+        print_cmd(f"OSC ERROR de socket en {host_osc}:{port_osc}: {e}")
+        return
 
+    try:
+        print_cmd(f"OSC escuchando en {host_osc}:{port_osc}")
+        server.serve_forever()  # Blocks forever
+    except Exception as e:
+        # Por si el servidor peta mientras está escuchando
+        print_cmd(f"OSC ERROR durante la escucha: {e}")
+        return
 
 def default_handler(address, *args):
     """ Lo que hace la mesa con cada  mensaje OSC """
@@ -932,17 +949,20 @@ class OpcConfigRed:
         """ Actualiza el HOST OSC"""
         # print(event)
         global host_osc
+
         if self.Host_osc_entry.get() == "":
-            host_osc = def_host
+            host_osc = def_host_osc
         else:
-            host_osc = self.Host_entry.get()
-        # lista_cues.selection_set(cue_actual)
+            host_osc = self.Host_osc_entry.get()
 
         self.Host_osc_entry.delete(0, "end")  # Actualiza texto
         self.Host_osc_entry.insert(0, host_osc)
         self.Host_osc_entry.configure(state='disabled')  # Bloquea etiqueta
 
         root.focus_set()  # Devuelve focus
+
+        # Reintenta iniciar el servidor OSC con la nueva configuración
+        osc_thread()
 
     def port_osc_enabled(self, event):
         # print(event)
@@ -970,6 +990,8 @@ class OpcConfigRed:
 
         root.focus_set()
 
+        # Reintenta iniciar el servidor OSC con el nuevo puerto
+        osc_thread()
 
 class OpcLlistaCues:
     """Muestra por pantalla la lista de Cues"""
