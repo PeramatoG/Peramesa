@@ -1440,12 +1440,24 @@ class Mesa:
         root.configure(bg=color_fondos)
 
         # Intenta poner icono
+        icon_dir = Path(__file__).resolve().parent
+        icon_set = False
+
         try:
-            root.wm_iconbitmap(default=r'pera.icns')
+            if platform.system() == "Darwin":
+                icon_path = icon_dir / "pera.icns"
+                root.wm_iconbitmap(default=str(icon_path))
+                icon_set = True
+            elif platform.system() == "Windows":
+                icon_path = icon_dir / "peramesa_multi.ico"
+                root.wm_iconbitmap(default=str(icon_path))
+                icon_set = True
         except Exception as e:
             print(e)
+
+        if not icon_set:
             try:
-                img = tk.Image("photo", file="peramesa.png")
+                img = tk.Image("photo", file=str(icon_dir / "peramesa.png"))
                 root.iconphoto(True, img)  # you may also want to try this.
                 root.tk.call('wm', 'iconphoto', root._w, img)
             except Exception as e:
