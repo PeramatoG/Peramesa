@@ -1612,8 +1612,10 @@ class Mesa:
         about_text = (
             "Peramesa v3.0\n"
             "Multiplatform OSC controller for mixing consoles.\n\n"
-            "Developed with Python and Tkinter.\n"
-            "For more information visit: https://github.com/jjfust/Peramesa"
+            "Developed by Luisma Peramato using Python and Tkinter.\n"
+            "More information:\n"
+            "GitHub: https://github.com/PeramatoG/Peramesa\n"
+            "Website: https://luismaperamato.com"
         )
 
         messagebox.showinfo(title="About Peramesa", message=about_text)
@@ -1685,4 +1687,5 @@ if __name__ == '__main__':
 
     osc_thread()
     root.mainloop()
+
 
