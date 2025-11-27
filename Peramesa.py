@@ -1,12 +1,15 @@
 import tkinter as tk  # Para la interfaz gráfica
 from tkinter.filedialog import *  # Para los cuadros de dialogo de cargar y grabar
 from tkinter import messagebox  # Para el evento cerrar ventana
+import os  # Para gestionar procesos del sistema
 import socket  # Para el modulo SOCKET de conexion red
 import threading  # Para realizar funciones en segundo plano
 from tkmacosx import Button  # Para utiliza botonis tipo mac
 import math as ma  # Para el logaritmo
 from sys import exit  # Para cerrar el programa
 import time
+import subprocess  # Para evitar que macOS duerma la app al minimizarla
+import platform
 
 
 from pathlib import Path  # Para extrar el nombre de archivo de una ruta de archivo
@@ -47,6 +50,7 @@ autosend_global = False  # Indica si está activado el envio automático
 
 temp_file_name = "temp_cues"
 show_iniciado = 0  # Para cargar el show una vez
+caffeinate_proc = None  # Proceso para mantener la app despierta en macOS
 
 # Configuracion red mesa de sonido
 def_host = "192.168.0.128"  # Original de la mesa
@@ -104,6 +108,29 @@ def borra_cmd():
         pass
     else:
         app.ventana_comando.borra_cmd()
+
+
+def evitar_app_nap():
+    """Evita que macOS pause la app cuando se minimiza (App Nap)."""
+    global caffeinate_proc
+
+    if platform.system() != "Darwin":
+        return
+
+    if caffeinate_proc is not None and caffeinate_proc.poll() is None:
+        # Ya hay un caffeinate activo
+        return
+
+    try:
+        # Mantiene la app "activa" mientras este proceso viva
+        caffeinate_proc = subprocess.Popen(
+            ["caffeinate", "-dimsu", "-w", str(os.getpid())]
+        )
+        print_cmd("App Nap desactivado para mantener la escucha y el envío en segundo plano")
+    except FileNotFoundError:
+        print_cmd(
+            "No se encontró 'caffeinate'; si macOS pausa la app al minimizarla, habilita App Nap manualmente"
+        )
 
 
 def clear_cue():
@@ -1598,6 +1625,8 @@ class Mesa:
 if __name__ == '__main__':
     root = tk.Tk()
     app = Mesa(root)
+
+    evitar_app_nap()
 
     # Intenta cargar el ultimo show utilizado
     if show_iniciado == 0:
