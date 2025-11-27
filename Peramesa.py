@@ -1,28 +1,28 @@
-import tkinter as tk  # Para la interfaz gráfica
-from tkinter.filedialog import *  # Para los cuadros de dialogo de cargar y grabar
-from tkinter import messagebox  # Para el evento cerrar ventana
-import os  # Para gestionar procesos del sistema
-import socket  # Para el modulo SOCKET de conexion red
-import threading  # Para realizar funciones en segundo plano
-from tkmacosx import Button  # Para utiliza botonis tipo mac
-import math as ma  # Para el logaritmo
-from sys import exit  # Para cerrar el programa
+import tkinter as tk  # GUI framework
+from tkinter.filedialog import *  # File dialogs for loading and saving
+from tkinter import messagebox  # Dialog for closing the window
+import os  # System process management
+import socket  # SOCKET module for network connections
+import threading  # Background tasks
+from tkmacosx import Button  # macOS-style buttons
+import math as ma  # Logarithms
+from sys import exit  # Exit the program
 import time
 import subprocess  # Para evitar que macOS duerma la app al minimizarla
 import platform
 
 
-from pathlib import Path  # Para extrar el nombre de archivo de una ruta de archivo
+from pathlib import Path  # Extract file names from file paths
 
-# Para el OSC
+# OSC support
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import BlockingOSCUDPServer
 
-fader_length = 150  # Longitud de los faders
-default_width = 5  # Anchura de las etiquetas
-show = "NEW SHOW"  # Nombre del show
+fader_length = 150  # Fader length
+default_width = 5  # Label width
+show = "NEW SHOW"  # Show name
 
-# Colores
+# Colors
 light_red = "#CD5C5C"
 light_green = "#98FB98"
 color_no_mod = "gray25"
@@ -31,37 +31,37 @@ color_mute = "gray50"
 color_on = "DarkOrange2"
 color_fondos = "gray40"
 
-# Fuentes
-default_font = "Helvetica 12 bold"  # Fuente por defecto
-med_font = "Helvetica 12 bold"  # Fuente tamaño medio
-small_font = "Helvetica 10 bold"  # Fuente chiquitica
+# Fonts
+default_font = "Helvetica 12 bold"  # Default font
+med_font = "Helvetica 12 bold"  # Medium-size font
+small_font = "Helvetica 10 bold"  # Small font
 
-# Listas para los datos
-envios = []  # Crea lista de envios
-seq = []  # Crea secuencia
-executor = []  # Crea lista para ejecutores
-listado_de_cues = []  # Listado de cues que se muestra en el box
+# Data containers
+envios = []  # List of sends
+seq = []  # Sequence
+executor = []  # List of executors
+listado_de_cues = []  # Cue list shown in the UI
 
-envio_actual = 0  # Envio seleccionado
-cue_actual = 0  # Cue actual
-exec_actual = 0  # Ejecutor actual
+envio_actual = 0  # Selected send
+cue_actual = 0  # Current cue
+exec_actual = 0  # Current executor
 
-autosend_global = False  # Indica si está activado el envio automático
+autosend_global = False  # Whether auto-send is enabled
 
 temp_file_name = "temp_cues"
-show_iniciado = 0  # Para cargar el show una vez
-caffeinate_proc = None  # Proceso para mantener la app despierta en macOS
+show_iniciado = 0  # Avoid loading the show more than once
+caffeinate_proc = None  # Process that keeps the app awake on macOS
 
-# Configuracion red mesa de sonido
-def_host = "192.168.0.128"  # Original de la mesa
-# host ="172.18.3.10" # De prueba
-# host ="192.168.137.1" # De prueba
-# host = "127.0.0.1"  # De prueba
-host = "172.18.3.10"  # Original de la mesa
-port = 49280  # Puerto seleccionado al iniciar
-def_port = 49280  # Puerto por defecto, debe ser 49280
+# Mixer network configuration
+def_host = "192.168.0.128"  # Mixer default
+# host ="172.18.3.10" # Test
+# host ="192.168.137.1" # Test
+# host = "127.0.0.1"  # Test
+host = "172.18.3.10"  # Mixer default
+port = 49280  # Selected port when starting
+def_port = 49280  # Default port, must be 49280
 
-# Configuracion red OSC
+# OSC network configuration
 def_host_osc = "127.0.0.1"
 host_osc = "127.0.0.1"
 def_port_osc = 5005
@@ -69,7 +69,7 @@ port_osc = 5005
 
 
 def show_inicial():
-    """Monta el show grabado como temporal"""
+    """Load the last temporary show on startup."""
     global show_iniciado
 
     try:
@@ -77,33 +77,33 @@ def show_inicial():
         datos = fichero.read()
         fichero.close()
         monta_show(datos)
-        print_cmd("Cargados ultimos valores utilizados")
+        print_cmd("Loaded last used values")
         show_iniciado = 1
 
     except Exception as e:
         print(e)
-        print_cmd("No se ha podido cargar ningun show")
+        print_cmd("No show could be loaded")
         show_iniciado = 1
 
     print_cmd("PERAMESA v3.0")
 
 
 def show_name_update():
-    """ Actualiza la etiqueta para el nombre del show """
+    """Update the show name entry field."""
     app.OpcionesNameShowCue.Show_entry.delete(0, 'end')
     app.OpcionesNameShowCue.Show_entry.insert(0, show)
 
 
 def print_cmd(*cadena):
-    """ Comprueba que se ha creado ya el objeto y utiliza su función """
-    if show_iniciado == 0:  # Aqui solo imprimime en la terminal
+    """Proxy for printing to terminal or the in-app command window."""
+    if show_iniciado == 0:  # Only prints to the terminal before the UI exists
         print(*cadena)
     else:
-        app.ventana_comando.print_cmd(*cadena)  # Aqui imprime en la ventan de comandos
+        app.ventana_comando.print_cmd(*cadena)  # Prints to the command window
 
 
 def borra_cmd():
-    """ Comprueba que se ha creado ya el objeto y utiliza su función """
+    """Clear the command window once it exists."""
     if show_iniciado == 0:
         pass
     else:
@@ -111,30 +111,30 @@ def borra_cmd():
 
 
 def evitar_app_nap():
-    """Evita que macOS pause la app cuando se minimiza (App Nap)."""
+    """Prevent macOS from pausing the app when minimized (App Nap)."""
     global caffeinate_proc
 
     if platform.system() != "Darwin":
         return
 
     if caffeinate_proc is not None and caffeinate_proc.poll() is None:
-        # Ya hay un caffeinate activo
+        # A caffeinate process is already running
         return
 
     try:
-        # Mantiene la app "activa" mientras este proceso viva
+        # Keep the app "active" while this process is alive
         caffeinate_proc = subprocess.Popen(
             ["caffeinate", "-dimsu", "-w", str(os.getpid())]
         )
-        print_cmd("App Nap desactivado para mantener la escucha y el envío en segundo plano")
+        print_cmd("App Nap disabled to keep listening and sending in the background")
     except FileNotFoundError:
         print_cmd(
-            "No se encontró 'caffeinate'; si macOS pausa la app al minimizarla, habilita App Nap manualmente"
+            "'caffeinate' not found; if macOS pauses the app when minimized, disable App Nap manually"
         )
 
 
 def clear_cue():
-    """ Limpia todos los valores de la cue actual """
+    """Reset every value of the current cue."""
     for j in range(0, 17):
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[j].canal[i].ch_value = 0
@@ -143,7 +143,7 @@ def clear_cue():
 
 
 def actualiza_executors():
-    """ Envia todos los valores de la cue actual a los ejecutores """
+    """Send current cue values to the executor widgets."""
     for i in range(0, 64):
         executor[i].carga_valores(
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_value,
@@ -152,8 +152,8 @@ def actualiza_executors():
 
 
 def gotocue(cue_destino):
-    """ Salta a la cue indicada """
-    # Limpia cuadro de comandos
+    """Jump to the requested cue."""
+    # Clear the command box
     global cue_actual
     cue_actual = cue_destino
     listado_de_cues[0].listado_upd()
@@ -163,9 +163,9 @@ def gotocue(cue_destino):
     print_cmd("Cue name: ", seq[0].cue_list[cue_actual].cue_name)
     app.OpcionesNameShowCue.Cue_entry.delete(0, 'end')
     app.OpcionesNameShowCue.Cue_entry.insert(0, seq[0].cue_list[cue_actual].cue_name)
-    root.focus_set()  # Selecciona focus en la ventana principal
+    root.focus_set()  # Focus on the main window
 
-    # Comprueba si esta activado auto send y envía a la mesa
+    # If auto-send is enabled, send values to the mixer
     if autosend_global:
         app.OpcionExtraButtons.conectar_directo(0)
     else:
@@ -173,25 +173,25 @@ def gotocue(cue_destino):
 
 
 def crear_archivo(name):
-    """ Función para crear archivo"""
-    fichero = open(name + ".csv", "w")  # Abrir fichero temporal modo escritura
+    """Create a CSV file with the current show data."""
+    fichero = open(name + ".csv", "w")  # Open temp file in write mode
 
-    # imprime a archivo el título
+    # Write the title
     fichero.write(show + "\n")
 
-    # imprime valores a archivo
-    for x in range(0, int(len(seq[0].cue_list))):  # loop por línea
-        fichero.write(str(seq[0].cue_list[x].cue_name) + ";")  # Nombre CUE
+    # Write values to the file
+    for x in range(0, int(len(seq[0].cue_list))):  # Loop per line
+        fichero.write(str(seq[0].cue_list[x].cue_name) + ";")  # Cue name
         for i in range(0, 17):
-            for j in range(0, 64):  # imprime valores del canal
+            for j in range(0, 64):  # Channel values
                 fichero.write(str(seq[0].cue_list[x].envio[i].canal[j].ch_value) + ";")
                 fichero.write(str(seq[0].cue_list[x].envio[i].canal[j].ch_mute) + ";")
                 fichero.write(str(seq[0].cue_list[x].envio[i].canal[j].ch_mod) + ";")
         fichero.write("\n")
-    fichero.close()  # Cerrar fichero
+    fichero.close()  # Close file
 
-    print_cmd("Numero de cues: " + str(len(seq[0].cue_list)))
-    print_cmd("Guardado archivo '" + str(name) + "'")  # Control #
+    print_cmd("Number of cues: " + str(len(seq[0].cue_list)))
+    print_cmd("Saved file '" + str(name) + "'")
 
 
 def autosave():
@@ -254,7 +254,7 @@ def monta_show(datos):
     cue_actual = 0
 
     gotocue(cue_actual)
-    borra_cmd()  # Limpia la pantalla
+    borra_cmd()  # Clear screen
 
 
 def fader_rango(valor_original):
@@ -271,53 +271,53 @@ def fader_rango(valor_original):
 
 
 def osc_thread():
-    """ Comienza hilo para el OSC """
+    """Start the OSC listening thread."""
     if show_iniciado:
-        # Abrimos hilo paralelo para la escucha
+        # Start a background thread for listening
         hacer = threading.Thread(target=listen)
-        hacer.daemon = True  # Para finalizar el hilo al cerrar la aplicación
-        hacer.start()  # Comienza a escuchar
+        hacer.daemon = True  # End the thread when the app closes
+        hacer.start()  # Begin listening
     else:
         pass
 
 
 def listen():
-    """ Escucha """
+    """Listen for OSC messages."""
     dispatcher = Dispatcher()
     dispatcher.set_default_handler(default_handler)
 
     try:
-        # Intentar abrir el servidor OSC en host_osc:port_osc
+        # Try to open the OSC server on host_osc:port_osc
         server = BlockingOSCUDPServer((host_osc, port_osc), dispatcher)
     except PermissionError as e:
-        # Error típico de permisos / firewall / puerto prohibido
-        print_cmd(f"OSC ERROR: no se ha podido abrir {host_osc}:{port_osc}")
-        print_cmd(f"OSC ERROR detalle: {e}")
+        # Typical permissions/firewall/blocked-port error
+        print_cmd(f"OSC ERROR: could not open {host_osc}:{port_osc}")
+        print_cmd(f"OSC ERROR detail: {e}")
         return
     except OSError as e:
-        # Otros errores de socket (IP no válida, puerto en uso, etc.)
-        print_cmd(f"OSC ERROR de socket en {host_osc}:{port_osc}: {e}")
+        # Other socket errors (invalid IP, port in use, etc.)
+        print_cmd(f"OSC socket ERROR at {host_osc}:{port_osc}: {e}")
         return
 
     try:
-        print_cmd(f"OSC escuchando en {host_osc}:{port_osc}")
+        print_cmd(f"OSC listening on {host_osc}:{port_osc}")
         server.serve_forever()  # Blocks forever
     except Exception as e:
-        # Por si el servidor peta mientras está escuchando
-        print_cmd(f"OSC ERROR durante la escucha: {e}")
+        # Catch server errors while listening
+        print_cmd(f"OSC ERROR while listening: {e}")
         return
 
 def default_handler(address, *args):
-    """ Lo que hace la mesa con cada  mensaje OSC """
+    """Handle each OSC message sent to the app."""
     print(f"Recibido: {address}: {args}")
 
     if address == "/go":
-        borra_cmd()  # Limpia la pantalla
-        if args[0] == 0:
-            if show_iniciado:
-                app.OpcListButtons.prev_cue()
-            else:
-                pass
+        borra_cmd()  # Clear command window
+            if args[0] == 0:
+                if show_iniciado:
+                    app.OpcListButtons.prev_cue()
+                else:
+                    pass
             print_cmd("OSC: GOBACK")
         else:
             if args[0] == 1:
@@ -327,57 +327,57 @@ def default_handler(address, *args):
                     pass
                 print_cmd("OSC: GO")
             else:
-                print_cmd("OSC: ** Valor no valido para go ** ")
+                print_cmd("OSC: ** Invalid value for go ** ")
                 pass
 
     else:
         if address == "/goto":
-            borra_cmd()  # Limpia la pantalla
+            borra_cmd()  # Clear screen
             if show_iniciado:
                 if int(args[0]) >= len(seq[0].cue_list):
-                    print_cmd("No existe la CUE: ", args[0])
+                    print_cmd("Cue does not exist: ", args[0])
                 else:
                     gotocue(args[0])
 
             print_cmd("OSC: GOTO CUE ", args[0])
 
         else:
-            print_cmd("OSC: Recibido mensaje no valido")
+            print_cmd("OSC: Received invalid message")
 
 
 def send_values():
-    """ Envia los valores a la mesa """
+    """Send values to the mixer."""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # sock.setblocking(0)
         sock.close()
     except:
         pass
-    # La conexion como una variable (Para facilitar su uso)
+    # Handle the connection as a variable (for convenience)
     try:
-        # Abrimos conexión
+        # Open connection
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
         sock.settimeout(5)
-        print_cmd("Conectado a " + str(host) + " en el puerto " + str(port))
-        print_cmd("Enviando:")
+        print_cmd("Connected to " + str(host) + " on port " + str(port))
+        print_cmd("Sending:")
 
         # Loop para el Master
         for channel in range(0, 64):
-            if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mod:  # Comprueba si hay que enviar el valor
+            if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mod:  # Check whether to send the value
                 ch = channel
                 thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_value)
 
-                if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute == "ON":  # Enciende canal
+                if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute == "ON":  # Turn channel on
                     string_fad_on = "set MIXER:Current/InCh/Fader/On {} 0 1\n".format(ch)
                     sock.sendall(string_fad_on.encode())
                 else:
-                    string_fad_off = "set MIXER:Current/InCh/Fader/On {} 0 0\n".format(ch)  # Mutea canal
+                    string_fad_off = "set MIXER:Current/InCh/Fader/On {} 0 0\n".format(ch)  # Mute channel
                     sock.sendall(string_fad_off.encode())
 
 
-                # Envia valores fader
-                string_level = "set MIXER:Current/InCh/Fader/Level {} 0 {}\n".format(ch, thelevel)  # Ajusta canal
+                # Send fader values
+                string_level = "set MIXER:Current/InCh/Fader/Level {} 0 {}\n".format(ch, thelevel)  # Adjust channel
                 sock.sendall(string_level.encode())
                 print_cmd("MASTER Ch ", ch, seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute, " at ",
                           thelevel)
@@ -385,24 +385,24 @@ def send_values():
             else:
                 pass
 
-        # Loop para el resto de los envios
+        # Loop for the remaining sends
         for send in range(1, 17):
             for channel in range(0, 64):
-                if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mod:  # Comprueba si hay que enviar
+                if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mod:  # Check whether to send
                     ch = channel
                     thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_value)
                     thesend = send - 1
 
-                    if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute == "ON":  # Enciende canal
+                    if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute == "ON":  # Turn channel on
                         string_fad_on = "set MIXER:Current/InCh/ToMix/On {} {} 1\n".format(ch, thesend)
                         sock.sendall(string_fad_on.encode())
 
                     else:
-                        string_fad_off = "set MIXER:Current/InCh/ToMix/On {} {} 0\n".format(ch, thesend)  # Mutea canal
+                        string_fad_off = "set MIXER:Current/InCh/ToMix/On {} {} 0\n".format(ch, thesend)  # Mute channel
                         sock.sendall(string_fad_off.encode())
 
 
-                    # Envia valores fader
+                    # Send fader values
                     string_level = "set MIXER:Current/InCh/ToMix/Level {} {} {}\n".format(ch, thesend, thelevel)
                     sock.sendall(string_level.encode())
                     print_cmd("SEND ", send, "Ch ", ch, seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute,
@@ -413,36 +413,36 @@ def send_values():
                     pass
         
         try:
-            # Recibe un mensaje antes de cerrar la conexion
+            # Receive a message before closing the connection
             sock.recv(1500)
             for i in range(0,5):
                 time.sleep(0.1)
         except:
-            print_cmd("La mesa no responde")
+            print_cmd("The mixer is not responding")
                 
 
 
-        # Cerrar SIEMPRE la conexion al final del Script
+        # ALWAYS close the connection at the end of the script
         # sock.setblocking(0)
         sock.close()
-        print_cmd("Conexión cerrada")
+        print_cmd("Connection closed")
 
 
     except ConnectionRefusedError as e:
         print(e)
-        print_cmd("CONEXION DENEGADA")
-        print_cmd("No se ha podido establecer conexión con la mesa")
-        print_cmd("IP: " + str(host) + "   Puerto: " + str(port))
+        print_cmd("CONNECTION REFUSED")
+        print_cmd("Could not establish a connection with the mixer")
+        print_cmd("IP: " + str(host) + "   Port: " + str(port))
 
     except TimeoutError as e:
         print(e)
-        print_cmd("TIEMPO PARA CONEXIÓN AGOTADO")
-        print_cmd("No se ha podido establecer conexión con la mesa")
-        print_cmd("IP: " + str(host) + "   Puerto: " + str(port))
+        print_cmd("CONNECTION TIMED OUT")
+        print_cmd("Could not establish a connection with the mixer")
+        print_cmd("IP: " + str(host) + "   Port: " + str(port))
 
 
 class Channel:
-    """ Estructura para los canales donde se guarda valor, mute y modificado """
+    """Structure for channels storing value, mute, and modified flags."""
 
     # Constructor de clase
     def __init__(self, ch_num, ch_value, ch_mute, ch_mod):
@@ -456,7 +456,7 @@ class Channel:
 
 
 class Send:
-    """ Estructura para envios """
+    """Structure for sends."""
 
     def __init__(self):
         canal = []
@@ -466,7 +466,7 @@ class Send:
 
 
 class Cue:
-    """ Estructura para cada cue"""
+    """Structure for each cue."""
 
     def __init__(self):
         cue_name = ''
@@ -485,7 +485,7 @@ class Cue:
 
 
 class Seq:
-    """ Estructura para la secuencia"""
+    """Sequence container."""
 
     def __init__(self):
         cue_list = []
@@ -496,7 +496,7 @@ class Seq:
 
 
 class SendsButtons:
-    """ Crea los botones de envios """
+    """Create the send buttons."""
 
     def __init__(self, send_num, sends_frame):
         self.send_num = send_num
@@ -526,11 +526,11 @@ class SendsButtons:
         self.send_button.bind('<Button-1>', lambda event: self.selec_send(event))
 
     def selec_send(self, event):
-        """ Selecciona el envío """
+        """Select the current send."""
         global envio_actual
         envios[envio_actual].send_button.config(bg=color_no_mod)
         # apaga_boton_envio(self.send_num)
-        envio_actual = self.send_num  # Actualiza envio actual
+        envio_actual = self.send_num  # Update current send
         self.send_button.config(bg=color_mod)
         self.send_button.config(highlightbackground="WHITE")
 
@@ -539,7 +539,7 @@ class SendsButtons:
         if envio_actual == 0:
             print_cmd("Master")
         else:
-            print_cmd("Envio " + str(envio_actual))
+            print_cmd("Send " + str(envio_actual))
 
     @staticmethod
     def send_color(send_num):
@@ -551,7 +551,7 @@ class SendsButtons:
 
 
 class Exec:
-    """ Crea los ejecutores, botones, etiquetas y faders"""
+    """Create executor widgets: buttons, labels, and faders."""
 
     def __init__(self, exec_ch, exec_value, exec_mute, exec_mod, exec_x, exec_y, exec_frame):
         label = tk.Label()
@@ -570,7 +570,7 @@ class Exec:
         self.exec_y = exec_y
         self.exec_frame = exec_frame
 
-        # Etiqueta ID
+        # ID label
         self.label = tk.Label(exec_frame,
                               font=default_font,
                               text="CH " + str(exec_ch + 1),
@@ -578,7 +578,7 @@ class Exec:
         self.label.grid(row=exec_y, column=exec_x)
         self.label.bind('<Double-Button-1>', lambda event: self.test(event))
 
-        # Botón Mute
+        # Mute button
         self.mute = tk.Label(exec_frame,
                              font=default_font,
                              text=exec_mute,
@@ -588,7 +588,7 @@ class Exec:
                              relief="ridge",
                              # borderless=1,
                              width=default_width)
-        #                     command=self.toggle)  # Envía a toggle el numero del boton
+        #                     command=self.toggle)  # Sends the button number to toggle
         self.mute.grid(row=exec_y + 1, column=exec_x)
         self.mute.grid(sticky="nsew")
         self.mute.bind('<Button-1>', lambda event: self.toggle(event))
@@ -597,41 +597,41 @@ class Exec:
         self.fader = tk.Scale(exec_frame,
                               font=default_font,
                               bg=color_fondos,
-                              bd=3,  # Grosor borde interior
-                              troughcolor="gray80",  # Color del fondo
+                              bd=3,  # Inner border width
+                              troughcolor="gray80",  # Background color
                               highlightcolor=color_fondos,
                               highlightbackground=color_fondos,
                               activebackground=color_mod,
-                              showvalue=0,  # No muestra el valor
+                              showvalue=0,  # Hide numeric value
                               from_=100,
                               to=0,
                               length=fader_length
                               )
         self.fader.config(command=self.actualiza_etiqueta_fader)
         self.fader.grid(row=exec_y + 2, column=exec_x)
-        self.fader.set(self.exec_value)  # Valor inicial
+        self.fader.set(self.exec_value)  # Initial value
         self.fader.bind("<ButtonRelease-1>", self.modifica_fader)
 
-        # Etiqueta con valor del fader. También indica si el canal se envía
+        # Label with the fader value. Also indicates whether the channel is sent
         self.fader_label = tk.Label(exec_frame,
                                     font=default_font,
                                     text=self.actualiza_etiqueta_fader,
-                                    bg=color_no_mod,  # Color normal de etiquetas
+                                    bg=color_no_mod,  # Default label color
                                     fg="BLACK",
                                     relief="ridge",
                                     width=default_width)
         self.fader_label.grid(row=exec_y + 3, column=exec_x)
         self.fader_label.bind('<Double-Button-1>',
-                              lambda event: self.tog_enviar(event))  # Al hacer doble clik elimina envío
+                              lambda event: self.tog_enviar(event))  # Double-click toggles whether to send
 
-        # Espacio en blanco
+        # Spacer
         self.white = tk.Label(exec_frame,
                               text="",
                               bg=color_fondos)
         self.white.grid(row=exec_y + 4, column=exec_x)
 
     def actualiza_etiqueta_fader(self, event):
-        """ Actualiza los valores 0 a 100 en dB """
+        """Update linear values (0–100) to dB."""
         # print(event)
         if self.fader.get() < 1:
             sdb = "- inf"  # "\u221E"
@@ -645,14 +645,14 @@ class Exec:
         self.fader_label.config(text=sdb)
 
     def test(self, event):
-        """ Función para probar cosas varias, indica el valor del canal que se pulsa """
+        """Debug helper: prints the value of the clicked channel."""
         # print(event)
         print("Send: ", envio_actual, "Ch:", (self.exec_ch + 1), "At: ", self.exec_value, self.exec_mute, "Mod: ",
               self.exec_mod)
-        print_cmd("OJETE")
+        print_cmd("DEBUG: test click")
 
     def toggle(self, event):
-        """Cambia el estado del botón MUTE"""
+        """Toggle the MUTE button state."""
         # print(event)
         self.fader_label.config(bg=color_mod)  # Actualiza la etiqueta de valores (modificado)
         self.exec_mod = True  # Actualiza canal a modificado
@@ -671,39 +671,39 @@ class Exec:
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[self.exec_ch].ch_mute = "ON"
 
     def modifica_fader(self, event):
-        """ Lo que hace al modificar el fader """
+        """Actions to perform when moving the fader."""
         # # print(event)
-        self.exec_value = self.fader.get()  # Actualiza variable del ejecutor
-        print_cmd("Fader", (self.exec_ch + 1), "at", self.fader.get(), "%")  # Imprime los datos
-        # Actualiza datos del fader
+        self.exec_value = self.fader.get()  # Update executor variable
+        print_cmd("Fader", (self.exec_ch + 1), "at", self.fader.get(), "%")  # Print data
+        # Update fader data
         seq[0].cue_list[cue_actual].envio[envio_actual].canal[self.exec_ch].ch_value = self.fader.get()
         # self.fader_label.config(text=self.fader.get())
         self.actualiza_etiqueta_fader(self)
-        # Modifica enviado
+        # Mark as modified
         seq[0].cue_list[cue_actual].envio[envio_actual].canal[self.exec_ch].ch_mod = True
         self.exec_mod = True
         self.fader_label.config(bg=color_mod)
 
     def tog_enviar(self, event):
-        """ Función para modificar si envía o no un canal """
+        """Toggle whether the channel will be sent."""
         # print(event)
         if not self.exec_mod:
             self.exec_mod = True
             self.fader_label.config(bg=color_mod)
-            print_cmd("Enviar valores del canal seleccionado")
+            print_cmd("Send values for the selected channel")
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[self.exec_ch].ch_mod = True
 
         else:
             self.exec_mod = False
             self.fader_label.config(bg=color_no_mod)
-            print_cmd("No enviar valores del canal seleccionado")
+            print_cmd("Do not send values for the selected channel")
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[self.exec_ch].ch_mod = False
 
     def carga_valores(self, upd_value, upd_mute, upd_mod):
         self.exec_value = upd_value
         self.fader_label.config(text=self.actualiza_etiqueta_fader(self))  # Cambia nombre etiqueta
 
-        # Actualiza valor MUTE del ejecutor
+        # Update executor MUTE value
         self.exec_mute = upd_mute
         if self.exec_mute == "ON":
             self.mute.config(bg=color_on)
@@ -715,18 +715,18 @@ class Exec:
             self.mute.config(highlightbackground="WHITE")
             self.mute.config(text=self.exec_mute)
 
-        # Actualiza propiedad modificada del fader
+        # Update modified property of the fader
         self.exec_mod = upd_mod
         if self.exec_mod:
             self.fader_label.config(bg=color_mod)
         else:
             self.fader_label.config(bg=color_no_mod)
 
-        self.fader.set(upd_value)  # Carga valor en el ejecutor
+        self.fader.set(upd_value)  # Load value into executor
 
 
 class OpcionesNameShowCue:
-    """ Estructura para las opciones del nombre del show y de la CUE actual"""
+    """Options for the show name and the current CUE name."""
 
     def __init__(self, option_frame):
         self.option_frame = option_frame
@@ -778,8 +778,7 @@ class OpcionesNameShowCue:
         self.Cue_entry.bind('<Return>', self.cue_name)
 
     def show_name(self, event):
-        """ Actualiza el nombre del show comprobando antes si es válido como
-        nombre de archivo """
+        """Update the show name, validating it as a file-safe string."""
         # print(event)
         global show
 
@@ -790,7 +789,7 @@ class OpcionesNameShowCue:
 
         valid = safe_string == self.Show_entry.get()
         if not valid:
-            print_cmd("Nombre no valido.")
+            print_cmd("Invalid name.")
         else:
             show = self.Show_entry.get()
             listado_de_cues[0].listado_cues.selection_set(cue_actual)
@@ -804,7 +803,7 @@ class OpcionesNameShowCue:
 
 
 class OpcConfigRed:
-    """ Estructura para las opciones de selección de red """
+    """Network configuration options."""
 
     def __init__(self, option_frame):
         self.option_frame = option_frame
@@ -813,7 +812,7 @@ class OpcConfigRed:
         global port
         global port_osc
 
-        # Etiqueta Configuracion Red
+        # Network configuration label
         self.Label_desk = tk.Label(self.option_frame,
                                    font=default_font,
                                    text="NETWORK CONFIGURATION",
@@ -822,7 +821,7 @@ class OpcConfigRed:
                                    width=20)
         self.Label_desk.grid(row=2, column=0, padx=8, pady=0, columnspan=2, sticky='NSEW')
 
-        # Etiqueta HOST
+        # HOST label
         self.Label_host = tk.Label(self.option_frame,
                                    font=default_font,
                                    text="DESK HOST",
@@ -831,7 +830,7 @@ class OpcConfigRed:
                                    width=10)
         self.Label_host.grid(sticky="W", row=3, column=0, padx=8, pady=0)
 
-        # Entrada valor HOST
+        # HOST value entry
         self.Host_entry = tk.Entry(option_frame,
                                    font=default_font,
                                    textvariable=host,
@@ -845,7 +844,7 @@ class OpcConfigRed:
         self.Host_entry.bind('<Return>', self.host_number)
         # self.Host_entry.bind('<Leave>', self.host_number)
 
-        # Etiqueta PORT
+        # PORT label
         self.Label_port = tk.Label(self.option_frame,
                                    font=default_font,
                                    text="DESK PORT",
@@ -854,7 +853,7 @@ class OpcConfigRed:
                                    width=10)
         self.Label_port.grid(sticky="W", row=4, column=0, padx=8, pady=0)
 
-        # Entrada valor PORT
+        # PORT value entry
         self.Port_entry = tk.Entry(self.option_frame,
                                    font=default_font,
                                    textvariable=port,
@@ -868,7 +867,7 @@ class OpcConfigRed:
         self.Port_entry.bind('<Return>', self.port_number)
         # self.Port_entry.bind('<Leave>', self.port_number)
 
-        # Etiqueta HOST OSC
+        # OSC HOST label
         self.Label_host_osc = tk.Label(self.option_frame,
                                        font=default_font,
                                        text="OSC HOST",
@@ -877,7 +876,7 @@ class OpcConfigRed:
                                        width=10)
         self.Label_host_osc.grid(sticky="W", row=5, column=0, padx=8, pady=0)
 
-        # Entrada valor HOST OSC
+        # OSC HOST value entry
         self.host_osc = tk.StringVar(self.option_frame, host_osc)
         self.Host_osc_entry = tk.Entry(option_frame,
                                        font=default_font,
@@ -892,7 +891,7 @@ class OpcConfigRed:
         self.Host_osc_entry.bind('<Return>', self.host_osc_number)
         # self.Host_osc_entry.bind('<Leave>', self.host_osc_number)
 
-        # Etiqueta PORT OSC
+        # OSC PORT label
         self.Label_osc_port = tk.Label(self.option_frame,
                                        font=default_font,
                                        text="OSC PORT",
@@ -901,7 +900,7 @@ class OpcConfigRed:
                                        width=10)
         self.Label_osc_port.grid(sticky="W", row=6, column=0, padx=8, pady=0)
 
-        # Entrada valor PORT OSC
+        # OSC PORT value entry
         self.port_osc = tk.StringVar(self.option_frame, port_osc)
         self.Port_osc_entry = tk.Entry(self.option_frame,
                                        font=default_font,
@@ -917,12 +916,12 @@ class OpcConfigRed:
         # self.Port_osc_entry.bind('<Leave>', self.port_osc_number)
 
     def port_enabled(self, event):
-        """ Desbloquea la entrada de datos """
+        """Unlock the port entry."""
         # print(event)
         self.Port_entry.configure(state='normal')
 
     def port_number(self, event):
-        """ Actualiza el PUERTO """
+        """Update the PORT value."""
         # print(event)
 
         global port
@@ -935,24 +934,24 @@ class OpcConfigRed:
             except Exception as e:
                 print(e)
                 port = def_port
-                print_cmd("Host no valido, cambiado a por defecto")
-                print_cmd("Host actual: " + str(port))
+                print_cmd("Invalid host; switched to default")
+                print_cmd("Current host: " + str(port))
 
         # listado_de_cues[0].selection_set(cue_actual)
 
-        self.Port_entry.delete(0, "end")  # Actualiza texto
+        self.Port_entry.delete(0, "end")  # Update text
         self.Port_entry.insert(0, port)
-        self.Port_entry.configure(state='disabled')  # Bloquea etiqueta
+        self.Port_entry.configure(state='disabled')  # Lock entry
 
         root.focus_set()
 
     def host_enabled(self, event):
-        """ Activar el host """
+        """Enable editing for the host field."""
         # print(event)
         self.Host_entry.configure(state='normal')
 
     def host_number(self, event):
-        """ Actualiza el HOST """
+        """Update the HOST value."""
         # print(event)
         global host
         if self.Host_entry.get() == "":
@@ -961,19 +960,19 @@ class OpcConfigRed:
             host = self.Host_entry.get()
         # lista_cues.selection_set(cue_actual)
 
-        self.Host_entry.delete(0, "end")  # Actualiza texto
+        self.Host_entry.delete(0, "end")  # Update text
         self.Host_entry.insert(0, host)
-        self.Host_entry.configure(state='disabled')  # Bloquea etiqueta
+        self.Host_entry.configure(state='disabled')  # Lock entry
 
-        root.focus_set()  # Devuelve focus
+        root.focus_set()  # Restore focus
 
     def host_osc_enabled(self, event):
-        """ Desbloquea la entrada de datos """
+        """Unlock the OSC host entry."""
         # print(event)
         self.Host_osc_entry.configure(state='normal')
 
     def host_osc_number(self, event):
-        """ Actualiza el HOST OSC"""
+        """Update the OSC HOST value."""
         # print(event)
         global host_osc
 
@@ -982,13 +981,13 @@ class OpcConfigRed:
         else:
             host_osc = self.Host_osc_entry.get()
 
-        self.Host_osc_entry.delete(0, "end")  # Actualiza texto
+        self.Host_osc_entry.delete(0, "end")  # Update text
         self.Host_osc_entry.insert(0, host_osc)
-        self.Host_osc_entry.configure(state='disabled')  # Bloquea etiqueta
+        self.Host_osc_entry.configure(state='disabled')  # Lock entry
 
-        root.focus_set()  # Devuelve focus
+        root.focus_set()  # Restore focus
 
-        # Reintenta iniciar el servidor OSC con la nueva configuración
+        # Retry OSC server with the new configuration
         osc_thread()
 
     def port_osc_enabled(self, event):
@@ -996,7 +995,7 @@ class OpcConfigRed:
         self.Port_osc_entry.configure(state='normal')
 
     def port_osc_number(self, event):
-        """ Actualiza el PUERTO OSC"""
+        """Update the OSC PORT value."""
         # print(event)
         global port_osc
         if self.Port_osc_entry.get() == "":
@@ -1008,20 +1007,20 @@ class OpcConfigRed:
             except Exception as e:
                 print(e)
                 port_osc = def_port_osc
-                print_cmd("OSC Port no valido, cambiado a por defecto")
-                print_cmd("OSC Port actual: " + str(port_osc))
+                print_cmd("Invalid OSC port; switched to default")
+                print_cmd("Current OSC port: " + str(port_osc))
 
-        self.Port_osc_entry.delete(0, "end")  # Actualiza texto
+        self.Port_osc_entry.delete(0, "end")  # Update text
         self.Port_osc_entry.insert(0, port_osc)
-        self.Port_osc_entry.configure(state='disabled')  # Bloquea etiqueta
+        self.Port_osc_entry.configure(state='disabled')  # Lock entry
 
         root.focus_set()
 
-        # Reintenta iniciar el servidor OSC con el nuevo puerto
+        # Retry OSC server with the new port
         osc_thread()
 
 class OpcLlistaCues:
-    """Muestra por pantalla la lista de Cues"""
+    """Display the list of cues."""
 
     def __init__(self, option_frame):
         self.option_frame = option_frame
@@ -1040,19 +1039,19 @@ class OpcLlistaCues:
                                ipadx=5, ipady=5, rowspan=8, columnspan=2)
 
         self.listado_upd()
-        self.listado_cues.selection_set(cue_actual)  # Selección de la lista por defecto
+        self.listado_cues.selection_set(cue_actual)  # Default list selection
         self.listado_cues.bind('<ButtonRelease-1>', self.goto_lista)
 
         self.scrollbar.config(command=self.listado_cues.yview)
 
     def goto_lista(self, event):
-        """ Salta a la cue pulsada """
+        """Jump to the selected cue."""
         # print(event)
-        borra_cmd()  # Limpia la pantalla
-        gotocue(self.listado_cues.curselection()[0])  # Selección de la lista por defecto
+        borra_cmd()  # Clear the screen
+        gotocue(self.listado_cues.curselection()[0])  # Default list selection
 
     def listado_upd(self):
-        """ Actualiza los elementos de la lista de CUES """
+        """Refresh the items of the CUE list."""
         self.listado_cues.delete(0, "end")
 
         for x in range(0, len(seq[0].cue_list)):  # Crea los elementos de la lista
@@ -1154,7 +1153,7 @@ class OpcListButtons:
 
     @staticmethod
     def move_up():
-        """ Desplaza hacia arriba la CUE actual """
+        """Move the current cue one position up."""
 
         global cue_actual
 
@@ -1162,7 +1161,7 @@ class OpcListButtons:
             seq[0].cue_list[cue_actual], seq[0].cue_list[cue_actual - 1] \
                 = seq[0].cue_list[cue_actual - 1], seq[0].cue_list[cue_actual]
             cue_actual -= 1
-            borra_cmd()  # Limpia la pantalla
+            borra_cmd()  # Clear screen
             gotocue(cue_actual)
 
         else:
@@ -1170,7 +1169,7 @@ class OpcListButtons:
 
     @staticmethod
     def move_dw():
-        """ Desplaza hacia abajo la CUE actual """
+        """Move the current cue one position down."""
 
         global cue_actual
 
@@ -1178,41 +1177,41 @@ class OpcListButtons:
             seq[0].cue_list[cue_actual], seq[0].cue_list[cue_actual + 1] \
                 = seq[0].cue_list[cue_actual + 1], seq[0].cue_list[cue_actual]
             cue_actual += 1
-            borra_cmd()  # Limpia la pantalla
+            borra_cmd()  # Clear screen
             gotocue(cue_actual)
 
     @staticmethod
     def new_cue():
-        """ Crea una nueva CUE """
+        """Create a new CUE."""
         global cue_actual
         seq[0].cue_list.append(Cue())
-        cue_actual = ((len(seq[0].cue_list)) - 1)  # Nos vamos a la última CUE
+        cue_actual = ((len(seq[0].cue_list)) - 1)  # Jump to the last CUE
         actualiza_executors()
-        seq[0].cue_list[cue_actual].cue_name = ("CUE " + str(cue_actual))  # Añade un nombre genérico  de cue
+        seq[0].cue_list[cue_actual].cue_name = ("CUE " + str(cue_actual))  # Generic cue name
         listado_de_cues[0].listado_upd()
-        borra_cmd()  # Limpia la pantalla
+        borra_cmd()  # Clear screen
         gotocue(cue_actual)
-        print_cmd("Creada CUE", cue_actual)
+        print_cmd("Created CUE", cue_actual)
 
     @staticmethod
     def delete_cue(event):
-        """ Borra la CUE seleccionada """
+        """Delete the selected CUE."""
         # print(event)
         global cue_actual
 
         if len(seq[0].cue_list) != 1:
-            del seq[0].cue_list[cue_actual]  # Borra el elemento completo de la secuencia
+            del seq[0].cue_list[cue_actual]  # Remove the element from the sequence
             if cue_actual != 0:
                 cue_actual -= 1
             else:
                 pass
 
-        else:  # La CUE 0 no se puede borrar, solo se inicializa
+        else:  # Cue 0 cannot be deleted; only reset
             clear_cue()
 
-        borra_cmd()  # Limpia la pantalla
-        print_cmd("CUE eliminada")
-        gotocue(cue_actual)  # Actualiza la mesa
+        borra_cmd()  # Clear screen
+        print_cmd("CUE deleted")
+        gotocue(cue_actual)  # Update mixer
 
 
 class OpcionExtraButtons:
@@ -1232,7 +1231,7 @@ class OpcionExtraButtons:
         self.a_send.grid(sticky="W", row=0, column=8, padx=8, pady=4)
         self.a_send.bind('<Button-1>', self.check_color)
 
-        # Boton que envía valores
+        # Button that sends values
         self.send_button = tk.Label(self.option_frame,
                                   font=med_font,
                                   text='SEND TO DESK',
@@ -1301,96 +1300,95 @@ class OpcionExtraButtons:
         self.mute_all_button.grid(sticky="W", row=6, column=8, padx=8, pady=4)
 
     def check_color(self, event):
-        """ Cambia el color del check para que sea visible que está activado"""
+        """Change the checkbox color to show whether it is enabled."""
         # print(event)
 
         global autosend_global
         if (self.autosend.get()) == True:
             self.a_send.config(fg="BLACK")
             autosend_global = False
-            print_cmd("*** Envío automático DESACTIVADO ***")
+            print_cmd("*** Automatic send DISABLED ***")
         else:
             self.a_send.config(fg="RED")
-            print_cmd("*** Envío automático ACTIVADO ***")
+            print_cmd("*** Automatic send ENABLED ***")
             autosend_global = True
 
     def conectar_directo(self, event):
-        """ Trata de conectar sin hilo paralelo """
+        """Connect without spawning a background thread."""
         send_values()
 
     def conectar(self, event):
-        """ Trata de conectar y enviar valores a la mesa, comienza un hilo paralelo
-        para que no se bloquee la mesa mientras trata de conectar """
-        self.send_button["state"] = "disabled"  # Cambiamos estado del botón
+        """Connect and send values using a background thread to avoid blocking."""
+        self.send_button["state"] = "disabled"  # Disable button while connecting
         self.send_button.config(bg="grey",
                                 highlightbackground="WHITE")
 
         # Abrimos hilo en paralelo
         self.task = threading.Thread(target=send_values)
-        self.task.daemon = True  # Para finalizar el hilo al cerrar la aplicación principal
+        self.task.daemon = True  # Stop thread when the main app closes
         self.task.start()
-        #  Chequamos periodicamente si el hilo ha finalizado
-        self.schedule_check(self.task)  # Comprobar que ha conseguido la conexión
+        # Periodically check whether the thread has finished
+        self.schedule_check(self.task)  # Confirm that the connection succeeded
 
     def schedule_check(self, task):
-        """ Programar la ejecución de la función `check_if_done()` dentro de un segundo.  """
+        """Schedule `check_if_done()` to run in one second."""
         root.after(1000, self.check_if_done, task)
 
     def check_if_done(self, task):
-        """ Comprueba si el hilo ha finalizado y realiza algunas acciones """
-        # Si el hilo ha finalizado, restaruar el botón y mostrar un mensaje.
+        """Check if the thread has finished and respond accordingly."""
+        # If the thread finished, restore the button and show a message.
         if not task.is_alive():
-            print_cmd("Conexión finalizada")
-            # Restablecer el botón.
+            print_cmd("Connection finished")
+            # Restore the button.
             self.send_button["state"] = "normal"
             self.send_button.config(bg=light_red,
                                     highlightbackground="WHITE")
         else:
-            # Si no, volver a chequear en unos momentos.
+            # Otherwise, check again shortly.
             self.schedule_check(task)
 
     @staticmethod
     def select_all():
-        """ Marca para enviar todos los canales del envio """
+        """Mark all channels in the send as modified."""
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[
                 i].ch_mod = True  # fader_label[i].config(bg=color_mod)
         actualiza_executors()
-        print_cmd("Todos los canales marcados para enviar")
+        print_cmd("All channels marked for sending")
 
     @staticmethod
     def unselect_all():
-        """ Desmarca para enviar todos los canales del envio """
+        """Unmark all channels in the send."""
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_mod = False
         actualiza_executors()
-        print_cmd("Desmarcados todos los canales para enviar")
+        print_cmd("All channels unmarked for sending")
 
     @staticmethod
     def clear_cue_upd():
-        """ Pone todos los valores a 0 y actualiza los ejecutores """
+        """Set all values to 0 and refresh the executors."""
         clear_cue()
         actualiza_executors()
 
     @staticmethod
     def on_all():
-        """ Desmutea todos los canales del envio  """
+        """Unmute every channel in the send."""
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_mute = "ON"
         actualiza_executors()
-        print_cmd("Todos los canales desmuteados")
+        print_cmd("All channels unmuted")
 
     @staticmethod
     def mute_all():
-        """ Mutea todos los canales del envio  """
+        """Mute every channel in the send."""
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_mute = "MUTE"
         actualiza_executors()
-        print_cmd("Todos los canales muteados")
+        print_cmd("All channels muted")
 
 
 class OpcionesVentanaCmd:
-    """ Ventana para mostrar comandos """
+    """Window to display commands."""
 
     def __init__(self, option_frame):
 
@@ -1407,7 +1405,7 @@ class OpcionesVentanaCmd:
                       ipadx=5, ipady=5, rowspan=6, columnspan=2)
 
     def print_cmd(self, *input_string):
-        """ Imprime en consola y en la pantalla Text """
+        """Print to console and the on-screen Text widget."""
         if show_iniciado == 0:
             print(*input_string)
         else:
@@ -1422,24 +1420,24 @@ class OpcionesVentanaCmd:
             self.cmd.configure(state='disabled')
 
     def borra_cmd(self):
-        """ Borra la pantalla """
+        """Clear the command window."""
         self.cmd.configure(state='normal')
         self.cmd.delete(1.0, "end")
         self.cmd.configure(state='disabled')
 
 
 class Mesa:
-    """ Bloque principal del programa"""
+    """Main application block."""
 
     def __init__(self, root):
         super().__init__()
-        """ Inicializa la mesa """
-        # Creamos ventana principal
+        """Initialize the app."""
+        # Main window
         root.title("Peramesa v3.0")
-        root.minsize(width=1330, height=820)  # Tamaño minimo principal
+        root.minsize(width=1330, height=820)  # Minimum size
         root.configure(bg=color_fondos)
 
-        # Intenta poner icono
+        # Try to load icons
         icon_dir = Path(__file__).resolve().parent
         icon_set = False
 
@@ -1464,15 +1462,15 @@ class Mesa:
                 print(e)
                 pass
 
-        root.protocol("WM_DELETE_WINDOW", on_closing)  # Al cerrar el programa
+        root.protocol("WM_DELETE_WINDOW", on_closing)  # On close event
 
-        # Creamos los distintos frames
+        # Create UI frames
         self.inicializa()
         self.crear_ejecutores()
         self.crear_envios()
         self.crear_opciones()
 
-        # Cramos barra de menus
+        # Create menu bar
         self.mainmenu = tk.Menu(root, tearoff=0, bg=color_fondos, fg="white")
         root.configure(menu=self.mainmenu)
 
@@ -1495,28 +1493,28 @@ class Mesa:
 
     @staticmethod
     def new_show():
-        """ Crea un nuevo archivo """
+        """Create a new show."""
         global cue_actual
         global show
 
-        crear_archivo(temp_file_name)  # Crea backup
-        cue_actual = 0  # Nos situamos en la primera CUE y la borramos
+        crear_archivo(temp_file_name)  # Create backup
+        cue_actual = 0  # Move to the first CUE and reset it
         clear_cue()
 
-        if len(seq[0].cue_list) != 1:  # Comprueba que hay más de un elemento
-            for x in range(1, len(seq[0].cue_list)):  # Borra todas las cues menos la 0
+        if len(seq[0].cue_list) != 1:  # Ensure there is more than one element
+            for x in range(1, len(seq[0].cue_list)):  # Delete every cue except 0
                 del seq[0].cue_list[1]
         else:
             pass
 
         show = "NEW SHOW"
         show_name_update()
-        borra_cmd()  # Limpia la pantalla
-        gotocue(cue_actual)  # Actualiza faders
+        borra_cmd()  # Clear screen
+        gotocue(cue_actual)  # Update faders
 
     @staticmethod
     def load_show():
-        """ Función para cargar show """
+        """Load a show from disk."""
         try:
             files = [('CSV', '*.csv'),
                      ('Text Document', '*.txt')]
@@ -1525,17 +1523,17 @@ class Mesa:
             datos = fichero.read()
             fichero.close()
             if datos == '':
-                print_cmd("Archivo no valido")
+                print_cmd("Invalid file")
             else:
                 monta_show(datos)
 
         except AttributeError as e:
             print(e)
-            print_cmd("Cancelado antes de cargar")
+            print_cmd("Cancelled before loading")
 
     @staticmethod
     def save_show():
-        """ Función para grabar el show """
+        """Save the current show."""
         global show
 
         try:
@@ -1553,50 +1551,65 @@ class Mesa:
 
         except Exception as e:
             print(e)
-            print_cmd("Cancelado antes de guardar")
+            print_cmd("Cancelled before saving")
 
     @staticmethod
     def help_window():
-        """ Crea ventana de ayuda """
-        help_w = tk.Toplevel(root)  # Crea ventana
+        """Create the help window with language selection."""
+        help_w = tk.Toplevel(root)  # Create window
         help_w.geometry('800x800')
         help_w.resizable(width=0, height=0)
         help_w.title("Help Peramesa v3.0")
 
-        h_scroll = tk.Scrollbar(help_w)  # Crea scrollbar
+        h_scroll = tk.Scrollbar(help_w)  # Create scrollbar
         h_scroll.pack(side=tk.RIGHT,
-                      fill=tk.Y)  # Situa el scroll a la derecha
+                      fill=tk.Y)  # Place scrollbar on the right
         help_text = tk.Text(help_w,
                             wrap=tk.NONE,
-                            yscrollcommand=h_scroll.set)  # text windget
+                            yscrollcommand=h_scroll.set)  # Text widget
         help_text.pack(fill=tk.BOTH,
                        expand=tk.YES,
                        side=tk.LEFT)
 
-        help_file = Path(__file__).with_name("help_text.txt")
-        long_text = help_file.read_text(encoding="utf-8")
-        help_text.insert(tk.END, long_text)
+        def load_help(language: str):
+            if language == "es":
+                help_file = Path(__file__).with_name("help_text_es.txt")
+            else:
+                help_file = Path(__file__).with_name("help_text_en.txt")
+
+            long_text = help_file.read_text(encoding="utf-8")
+            help_text.configure(state='normal')
+            help_text.delete(1.0, tk.END)
+            help_text.insert(tk.END, long_text)
+            help_text.configure(state='disabled')
+
+        button_frame = tk.Frame(help_w)
+        button_frame.pack(fill=tk.X, pady=4)
+        tk.Button(button_frame, text="English", command=lambda: load_help("en"), width=12).pack(side=tk.LEFT, padx=4)
+        tk.Button(button_frame, text="Español", command=lambda: load_help("es"), width=12).pack(side=tk.LEFT, padx=4)
+
         h_scroll.config(command=help_text.yview)
+        load_help("en")
         tk.mainloop()
 
     # Crear bloques del programa
 
     @staticmethod
     def inicializa():
-        """ Inicializamos valores de mesa  """
+        """Initialize mixer values."""
         seq.append(Seq())
 
     @staticmethod
     def crear_ejecutores():
-        """ Crea el frame con los ejecutores"""
-        # Frame con los ejecutores
+        """Create the executor frame."""
+        # Executor frame
         exec_frame = tk.Frame(root)
         exec_frame.configure(bg=color_fondos)
         exec_frame.grid(row=1, column=0, padx=5, pady=5)
 
-        # Bucle para crear los ejecutores
+        # Loop to create executors
         for i in range(0, 64):
-            # Posiciones de "grid"
+            # Grid positions
             if i < 32:
                 posicion_x = i
                 posicion_y = 6
@@ -1604,7 +1617,7 @@ class Mesa:
                 posicion_y = 1
                 posicion_x = i - 32
 
-            # Creamos los ejecutores
+            # Create executors
             executor.append(Exec(i,
                                  seq[0].cue_list[0].envio[envio_actual].canal[i].ch_value,
                                  seq[0].cue_list[0].envio[envio_actual].canal[i].ch_mute,
@@ -1612,26 +1625,26 @@ class Mesa:
 
     @staticmethod
     def crear_envios():
-        """ Apartado para los botones de envio """
+        """Create the send buttons."""
         sends_frame = tk.Frame(root)
         sends_frame.configure(bg=color_fondos)
         sends_frame.grid(sticky="W", row=0, column=0, padx=5, pady=5)
 
-        for i in range(0, 17):  # Para los 16 envios y el Master
+        for i in range(0, 17):  # For the 16 sends and the Master
             envios.append(SendsButtons(i, sends_frame))
 
     def crear_opciones(self):
-        option_frame = tk.Frame(root)  # Creamos el frame para las opciones
-        option_frame.config(bg=color_fondos)  # Color de fondo del frame
+        option_frame = tk.Frame(root)  # Options frame
+        option_frame.config(bg=color_fondos)  # Background color
         option_frame.grid(sticky="W", row=2, column=0, padx=5, pady=5)
 
-        self.OpcionesNameShowCue = OpcionesNameShowCue(option_frame)  # Botones para cambiar nobre show y CUE
-        self.OpcConfigRed = OpcConfigRed(option_frame)  # Botones para cambiar la red de evíos
-        listado_de_cues.append(OpcLlistaCues(option_frame))  # Crea la lista de CUES
+        self.OpcionesNameShowCue = OpcionesNameShowCue(option_frame)  # Buttons to change show and cue names
+        self.OpcConfigRed = OpcConfigRed(option_frame)  # Buttons to change network options
+        listado_de_cues.append(OpcLlistaCues(option_frame))  # Cue list
 
-        self.OpcListButtons = OpcListButtons(option_frame)  # Crea botones para moverse por la lista
-        self.OpcionExtraButtons = OpcionExtraButtons(option_frame)  # Crea botones con algunas funciones extra
-        self.ventana_comando = OpcionesVentanaCmd(option_frame)  # Crea ventana comandos
+        self.OpcListButtons = OpcListButtons(option_frame)  # Buttons to navigate the list
+        self.OpcionExtraButtons = OpcionExtraButtons(option_frame)  # Extra functions buttons
+        self.ventana_comando = OpcionesVentanaCmd(option_frame)  # Command window
 
 
 if __name__ == '__main__':
@@ -1640,7 +1653,7 @@ if __name__ == '__main__':
 
     evitar_app_nap()
 
-    # Intenta cargar el ultimo show utilizado
+    # Try to load the last used show
     if show_iniciado == 0:
         show_inicial()
 
