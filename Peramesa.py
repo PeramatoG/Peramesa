@@ -358,6 +358,7 @@ def send_values():
         # Open connection
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
+        time.sleep(0.05)  # Small delay to give the console time after TCP connect
         sock.settimeout(5)
         print_cmd("Connected to " + str(host) + " on port " + str(port))
         print_cmd("Sending:")
@@ -381,9 +382,12 @@ def send_values():
                 sock.sendall(string_level.encode())
                 print_cmd("MASTER Ch ", ch, seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute, " at ",
                           thelevel)
+                time.sleep(0.002)  # Throttle: ~2 ms pause per modified channel on MASTER
 
             else:
                 pass
+
+        time.sleep(0.03)  # Throttle: ~30 ms between MASTER and first SEND
 
         # Loop for the rest of the sends
         for send in range(1, 17):
@@ -407,16 +411,17 @@ def send_values():
                     sock.sendall(string_level.encode())
                     print_cmd("SEND ", send, "Ch ", ch, seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute,
                               " at ", thelevel)
+                    time.sleep(0.002)  # Throttle: ~2 ms pause per modified channel on SENDS
 
 
                 else:
                     pass
-        
+
+            time.sleep(0.03)  # Throttle: ~30 ms between SENDs
+
         try:
             # Receive a message before closing the connection
             sock.recv(1500)
-            for i in range(0,5):
-                time.sleep(0.1)
         except:
             print_cmd("The console is not responding")
                 
@@ -426,6 +431,7 @@ def send_values():
         # sock.setblocking(0)
         sock.close()
         print_cmd("Connection closed")
+        time.sleep(0.2)  # Throttle: 200 ms pause between full bursts
 
 
     except ConnectionRefusedError as e:
