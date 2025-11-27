@@ -126,10 +126,10 @@ def evitar_app_nap():
         caffeinate_proc = subprocess.Popen(
             ["caffeinate", "-dimsu", "-w", str(os.getpid())]
         )
-        print_cmd("App Nap desactivado para mantener la escucha y el envío en segundo plano")
+        print_cmd("App Nap disabled to keep listening and sending in the background")
     except FileNotFoundError:
         print_cmd(
-            "No se encontró 'caffeinate'; si macOS pausa la app al minimizarla, habilita App Nap manualmente"
+            "'caffeinate' not found; if macOS pauses the app when minimized, disable App Nap manually"
         )
 
 
@@ -190,8 +190,8 @@ def crear_archivo(name):
         fichero.write("\n")
     fichero.close()  # Close file
 
-    print_cmd("Numero de cues: " + str(len(seq[0].cue_list)))
-    print_cmd("Guardado archivo '" + str(name) + "'")  # Control
+    print_cmd("Number of cues: " + str(len(seq[0].cue_list)))
+    print_cmd("Saved file '" + str(name) + "'")  # Control
 
 
 def autosave():
@@ -291,25 +291,25 @@ def listen():
         server = BlockingOSCUDPServer((host_osc, port_osc), dispatcher)
     except PermissionError as e:
         # Common permission/firewall/blocked-port error
-        print_cmd(f"OSC ERROR: no se ha podido abrir {host_osc}:{port_osc}")
-        print_cmd(f"OSC ERROR detalle: {e}")
+        print_cmd(f"OSC ERROR: could not open {host_osc}:{port_osc}")
+        print_cmd(f"OSC ERROR detail: {e}")
         return
     except OSError as e:
         # Other socket errors (invalid IP, port in use, etc.)
-        print_cmd(f"OSC ERROR de socket en {host_osc}:{port_osc}: {e}")
+        print_cmd(f"OSC SOCKET ERROR at {host_osc}:{port_osc}: {e}")
         return
 
     try:
-        print_cmd(f"OSC escuchando en {host_osc}:{port_osc}")
+        print_cmd(f"OSC listening on {host_osc}:{port_osc}")
         server.serve_forever()  # Blocks forever
     except Exception as e:
         # In case the server crashes while listening
-        print_cmd(f"OSC ERROR durante la escucha: {e}")
+        print_cmd(f"OSC ERROR while listening: {e}")
         return
 
 def default_handler(address, *args):
     """What the desk does with each OSC message"""
-    print(f"Recibido: {address}: {args}")
+    print(f"Received: {address}: {args}")
 
     if address == "/go":
         borra_cmd()  # Clear the screen
@@ -327,7 +327,7 @@ def default_handler(address, *args):
                     pass
                 print_cmd("OSC: GO")
             else:
-                print_cmd("OSC: ** Valor no valido para go ** ")
+                print_cmd("OSC: ** Invalid value for go ** ")
                 pass
 
     else:
@@ -335,14 +335,14 @@ def default_handler(address, *args):
             borra_cmd()  # Clear the screen
             if show_iniciado:
                 if int(args[0]) >= len(seq[0].cue_list):
-                    print_cmd("No existe la CUE: ", args[0])
+                    print_cmd("CUE does not exist: ", args[0])
                 else:
                     gotocue(args[0])
 
             print_cmd("OSC: GOTO CUE ", args[0])
 
         else:
-            print_cmd("OSC: Recibido mensaje no valido")
+            print_cmd("OSC: Received invalid message")
 
 
 def send_values():
@@ -359,8 +359,8 @@ def send_values():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
         sock.settimeout(5)
-        print_cmd("Conectado a " + str(host) + " en el puerto " + str(port))
-        print_cmd("Enviando:")
+        print_cmd("Connected to " + str(host) + " on port " + str(port))
+        print_cmd("Sending:")
 
         # Loop for the Master send
         for channel in range(0, 64):
@@ -418,27 +418,27 @@ def send_values():
             for i in range(0,5):
                 time.sleep(0.1)
         except:
-            print_cmd("La mesa no responde")
+            print_cmd("The console is not responding")
                 
 
 
         # ALWAYS close the connection at the end of the script
         # sock.setblocking(0)
         sock.close()
-        print_cmd("Conexión cerrada")
+        print_cmd("Connection closed")
 
 
     except ConnectionRefusedError as e:
         print(e)
-        print_cmd("CONEXION DENEGADA")
-        print_cmd("No se ha podido establecer conexión con la mesa")
-        print_cmd("IP: " + str(host) + "   Puerto: " + str(port))
+        print_cmd("CONNECTION REFUSED")
+        print_cmd("Could not establish a connection to the console")
+        print_cmd("IP: " + str(host) + "   Port: " + str(port))
 
     except TimeoutError as e:
         print(e)
-        print_cmd("TIEMPO PARA CONEXIÓN AGOTADO")
-        print_cmd("No se ha podido establecer conexión con la mesa")
-        print_cmd("IP: " + str(host) + "   Puerto: " + str(port))
+        print_cmd("CONNECTION TIMEOUT")
+        print_cmd("Could not establish a connection to the console")
+        print_cmd("IP: " + str(host) + "   Port: " + str(port))
 
 
 class Channel:
@@ -539,7 +539,7 @@ class SendsButtons:
         if envio_actual == 0:
             print_cmd("Master")
         else:
-            print_cmd("Envio " + str(envio_actual))
+            print_cmd("Send " + str(envio_actual))
 
     @staticmethod
     def send_color(send_num):
@@ -649,7 +649,7 @@ class Exec:
         # print(event)
         print("Send: ", envio_actual, "Ch:", (self.exec_ch + 1), "At: ", self.exec_value, self.exec_mute, "Mod: ",
               self.exec_mod)
-        print_cmd("OJETE")
+        print_cmd("TEST MESSAGE")
 
     def toggle(self, event):
         """Change the state of the MUTE button"""
@@ -789,7 +789,7 @@ class OpcionesNameShowCue:
 
         valid = safe_string == self.Show_entry.get()
         if not valid:
-            print_cmd("Nombre no valido.")
+            print_cmd("Invalid name.")
         else:
             show = self.Show_entry.get()
             listado_de_cues[0].listado_cues.selection_set(cue_actual)
@@ -934,8 +934,8 @@ class OpcConfigRed:
             except Exception as e:
                 print(e)
                 port = def_port
-                print_cmd("Host no valido, cambiado a por defecto")
-                print_cmd("Host actual: " + str(port))
+                print_cmd("Invalid port, changed to default")
+                print_cmd("Current port: " + str(port))
 
         # listado_de_cues[0].selection_set(cue_actual)
 
@@ -1007,8 +1007,8 @@ class OpcConfigRed:
             except Exception as e:
                 print(e)
                 port_osc = def_port_osc
-                print_cmd("OSC Port no valido, cambiado a por defecto")
-                print_cmd("OSC Port actual: " + str(port_osc))
+                print_cmd("Invalid OSC port, changed to default")
+                print_cmd("Current OSC port: " + str(port_osc))
 
         self.Port_osc_entry.delete(0, "end")  # Update text
         self.Port_osc_entry.insert(0, port_osc)
@@ -1191,7 +1191,7 @@ class OpcListButtons:
         listado_de_cues[0].listado_upd()
         borra_cmd()  # Clear the screen
         gotocue(cue_actual)
-        print_cmd("Creada CUE", cue_actual)
+        print_cmd("Created CUE", cue_actual)
 
     @staticmethod
     def delete_cue(event):
@@ -1210,7 +1210,7 @@ class OpcListButtons:
             clear_cue()
 
         borra_cmd()  # Clear the screen
-        print_cmd("CUE eliminada")
+        print_cmd("CUE deleted")
         gotocue(cue_actual)  # Update the desk
 
 
@@ -1307,10 +1307,10 @@ class OpcionExtraButtons:
         if (self.autosend.get()) == True:
             self.a_send.config(fg="BLACK")
             autosend_global = False
-            print_cmd("*** Envío automático DESACTIVADO ***")
+            print_cmd("*** Autosend DISABLED ***")
         else:
             self.a_send.config(fg="RED")
-            print_cmd("*** Envío automático ACTIVADO ***")
+            print_cmd("*** Autosend ENABLED ***")
             autosend_global = True
 
     def conectar_directo(self, event):
@@ -1339,7 +1339,7 @@ class OpcionExtraButtons:
         """Check if the thread has finished and perform some actions"""
         # If the thread has finished, restore the button and show a message.
         if not task.is_alive():
-            print_cmd("Conexión finalizada")
+            print_cmd("Connection finished")
             # Restore the button.
             self.send_button["state"] = "normal"
             self.send_button.config(bg=light_red,
@@ -1377,7 +1377,7 @@ class OpcionExtraButtons:
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_mute = "ON"
         actualiza_executors()
-        print_cmd("Todos los canales desmuteados")
+        print_cmd("All channels unmuted")
 
     @staticmethod
     def mute_all():
@@ -1385,7 +1385,7 @@ class OpcionExtraButtons:
         for i in range(0, 64):
             seq[0].cue_list[cue_actual].envio[envio_actual].canal[i].ch_mute = "MUTE"
         actualiza_executors()
-        print_cmd("Todos los canales muteados")
+        print_cmd("All channels muted")
 
 
 class OpcionesVentanaCmd:
@@ -1524,13 +1524,13 @@ class Mesa:
             datos = fichero.read()
             fichero.close()
             if datos == '':
-                print_cmd("Archivo no valido")
+                print_cmd("Invalid file")
             else:
                 monta_show(datos)
 
         except AttributeError as e:
             print(e)
-            print_cmd("Cancelado antes de cargar")
+            print_cmd("Canceled before loading")
 
     @staticmethod
     def save_show():
@@ -1552,7 +1552,7 @@ class Mesa:
 
         except Exception as e:
             print(e)
-            print_cmd("Cancelado antes de guardar")
+            print_cmd("Canceled before saving")
 
     @staticmethod
     def help_window():
