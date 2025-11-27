@@ -1,0 +1,72 @@
+*** HELP ****
+PERAMESA V3.0
+
+*** TOP PANEL ***
+
+Adjust channel levels and mutes as needed in each send.
+
+Double-click the bottom label of a channel to toggle between:
+    - Gray, which indicates that channel will NOT be sent to the mixer.
+    - Orange, which indicates that this channel WILL be sent to the mixer when requested.
+
+When any channel property changes, the bottom label turns orange to indicate
+those channel values will be sent to the mixer.
+
+*** BOTTOM PANEL ***
+
+[SHOW NAME]     Edit the SHOW name here.
+[CUE NAME]      Edit the current CUE name here.
+
+[DESK HOST]     Enter the mixer HOST here. Double-click the label to edit it.
+                If the field is left empty it returns to the default value.
+
+[DESK PORT]     Enter the mixer PORT here. Double-click the label to edit it.
+                If the field is left empty it returns to the default value.
+
+[OSC HOST]      Enter the HOST for OSC here. Double-click the label to edit it.
+                If the field is left empty it returns to the default value.
+
+[OSC PORT]      Enter the PORT for OSC here. Double-click the label to edit it.
+                If the field is left empty it returns to the default value.
+
+
+[CUES List]     Jump to a specific CUE by clicking it.
+[<< PREV]       Jump to the previous CUE.
+[NEXT >>]       Jump to the next CUE.
+[MOVE UP]       Move the selected CUE one position up.
+[MOVE DW]       Move the selected CUE one position down.
+[NEW]           Create a new CUE at the end of the list.
+
+[DELETE]        Delete the current CUE and advance to the next available CUE.
+
+[] AUTOSEND     If the "AUTOSEND" box is checked, the program will try to send
+                data to the mixer whenever the CUE changes, as long as
+                a connection is possible.
+[SEND TO DESK]  Send the current top-panel values to the mixer.
+[SELECT]        Marks all channels in that layer as modified; if you then press
+                [SEND TO DESK], the program will try to send all channels
+                in that layer to the mixer.
+[UNSELECT]      Marks all channels in that layer as NOT modified, so pressing
+                [SEND TO DESK] will not send anything from that layer.
+[CLEAR]         First press: unmute all channels and set their level to 0.
+                Second press: also unselects sending channels.
+[GO ALL]        Unmutes all channels in that layer without marking them for sending.
+[MUTE ALL]      Mutes all channels in that layer without marking them for sending.
+
+[CMD Line]      Window showing some of the actions performed by the mixer.
+
+*** OSC ***
+
+The program responds to the following OSC commands:
+
+/go 0     Jump to the previous CUE
+/go 1     Jump to the next CUE
+/goto x   Jump to CUE x
+
+To configure QLab:
+
+Open [Settings] (the gear icon at bottom right) >> [Network] and set up a patch
+with the same Host IP and port.
+
+Create a [Network] event (the target-shaped button), and in [Basics] select the
+patch you created as [Destination], then choose [Type] >> [OSC message].
