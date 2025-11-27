@@ -7,13 +7,20 @@ Usage:
 
 from setuptools import setup
 
-APP = ['Peramesa.py']
-DATA_FILES = ['backup.csv', 'pera.icns', 'peramesa.png', 'temp_cues.csv']
-OPTIONS = {'iconfile':'pera.icns'}
+APP = ["Peramesa.py"]
+DATA_FILES = [
+    "pera.icns",
+    "peramesa.png",
+    "help_text.txt",
+    "help_text_en.txt",
+]
+OPTIONS = {
+    "iconfile": "pera.icns",
+}
 
 setup(
     app=APP,
     data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app'],
+    options={"py2app": OPTIONS},
+    setup_requires=["py2app"],
 )
