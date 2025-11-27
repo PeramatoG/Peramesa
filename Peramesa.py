@@ -1482,6 +1482,7 @@ class Mesa:
         self.file_menu.add_command(label="Save show", command=self.save_show)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Help", command=self.help_window)
+        self.file_menu.add_command(label="About", command=self.about_window)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=on_closing)
 
@@ -1604,6 +1605,18 @@ class Mesa:
         load_help_text()
         h_scroll.config(command=help_text.yview)
         tk.mainloop()
+
+    @staticmethod
+    def about_window():
+        """Show basic information about the application"""
+        about_text = (
+            "Peramesa v3.0\n"
+            "Multiplatform OSC controller for mixing consoles.\n\n"
+            "Developed with Python and Tkinter.\n"
+            "For more information visit: https://github.com/jjfust/Peramesa"
+        )
+
+        messagebox.showinfo(title="About Peramesa", message=about_text)
 
     # Create the program blocks
 
