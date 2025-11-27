@@ -1562,6 +1562,35 @@ class Mesa:
         help_w.resizable(width=0, height=0)
         help_w.title("Help Peramesa v3.0")
 
+        help_file_map = {
+            "English": Path(__file__).with_name("help_text_en.txt"),
+            "Spanish": Path(__file__).with_name("help_text.txt"),
+        }
+
+        control_frame = tk.Frame(help_w)
+        control_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(control_frame, text="Language:").pack(side=tk.LEFT)
+
+        selected_language = tk.StringVar(value="English")
+
+        def load_help_text(*_):
+            help_path = help_file_map.get(selected_language.get())
+            if help_path is None:
+                return
+
+            long_text = help_path.read_text(encoding="utf-8")
+            help_text.configure(state=tk.NORMAL)
+            help_text.delete("1.0", tk.END)
+            help_text.insert(tk.END, long_text)
+            help_text.configure(state=tk.NORMAL)
+
+        tk.OptionMenu(control_frame,
+                      selected_language,
+                      "English",
+                      "Spanish",
+                      command=load_help_text).pack(side=tk.LEFT, padx=5)
+
         h_scroll = tk.Scrollbar(help_w)  # Create scrollbar
         h_scroll.pack(side=tk.RIGHT,
                       fill=tk.Y)  # Place scroll on the right
@@ -1572,9 +1601,7 @@ class Mesa:
                        expand=tk.YES,
                        side=tk.LEFT)
 
-        help_file = Path(__file__).with_name("help_text.txt")
-        long_text = help_file.read_text(encoding="utf-8")
-        help_text.insert(tk.END, long_text)
+        load_help_text()
         h_scroll.config(command=help_text.yview)
         tk.mainloop()
 
