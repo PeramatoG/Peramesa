@@ -8,7 +8,7 @@ from tkmacosx import Button  # To use mac-style buttons
 import math as ma  # For the logarithm
 from sys import exit  # To close the program
 import time
-import subprocess  # Para evitar que macOS duerma la app al minimizarla
+import subprocess  # To prevent macOS from putting the app to sleep when minimized
 import platform
 
 
@@ -254,7 +254,7 @@ def monta_show(datos):
     cue_actual = 0
 
     gotocue(cue_actual)
-    borra_cmd()  # Limpia la pantalla
+    borra_cmd()  # Clear the screen
 
 
 def fader_rango(valor_original):
@@ -312,7 +312,7 @@ def default_handler(address, *args):
     print(f"Recibido: {address}: {args}")
 
     if address == "/go":
-        borra_cmd()  # Limpia la pantalla
+        borra_cmd()  # Clear the screen
         if args[0] == 0:
             if show_iniciado:
                 app.OpcListButtons.prev_cue()
@@ -332,7 +332,7 @@ def default_handler(address, *args):
 
     else:
         if address == "/goto":
-            borra_cmd()  # Limpia la pantalla
+            borra_cmd()  # Clear the screen
             if show_iniciado:
                 if int(args[0]) >= len(seq[0].cue_list):
                     print_cmd("No existe la CUE: ", args[0])
@@ -353,7 +353,7 @@ def send_values():
         sock.close()
     except:
         pass
-    # La conexion como una variable (Para facilitar su uso)
+    # Store the connection as a variable (to make it easier to use)
     try:
         # Open connection
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -368,7 +368,7 @@ def send_values():
                 ch = channel
                 thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_value)
 
-                if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute == "ON":  # Enciende canal
+                if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute == "ON":  # Turn on channel
                     string_fad_on = "set MIXER:Current/InCh/Fader/On {} 0 1\n".format(ch)
                     sock.sendall(string_fad_on.encode())
                 else:
@@ -376,7 +376,7 @@ def send_values():
                     sock.sendall(string_fad_off.encode())
 
 
-                # Envia valores fader
+                # Send fader values
                 string_level = "set MIXER:Current/InCh/Fader/Level {} 0 {}\n".format(ch, thelevel)  # Ajusta canal
                 sock.sendall(string_level.encode())
                 print_cmd("MASTER Ch ", ch, seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute, " at ",
@@ -393,7 +393,7 @@ def send_values():
                     thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_value)
                     thesend = send - 1
 
-                    if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute == "ON":  # Enciende canal
+                    if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mute == "ON":  # Turn on channel
                         string_fad_on = "set MIXER:Current/InCh/ToMix/On {} {} 1\n".format(ch, thesend)
                         sock.sendall(string_fad_on.encode())
 
@@ -1071,7 +1071,7 @@ class OpcListButtons:
         self.newcue_button = Button()
         self.deletecue_button = Button()
 
-        # Boton previos CUE
+        # Previous CUE button
         self.prevcue_button = Button(self.option_frame,
                                      font=med_font,
                                      fg="BLACK",
@@ -1082,7 +1082,7 @@ class OpcListButtons:
                                      command=self.prev_cue)
         self.prevcue_button.grid(sticky="W", row=1, column=7, padx=8, pady=4)
 
-        # Boton next CUE
+        # Next CUE button
         self.nextcue_button = Button(self.option_frame,
                                      font=med_font,
                                      fg="BLACK",
@@ -1093,7 +1093,7 @@ class OpcListButtons:
                                      command=self.next_cue)
         self.nextcue_button.grid(sticky="W", row=2, column=7, padx=8, pady=4)
 
-        # Boton move up
+        # Move up button
         self.moveup_button = Button(self.option_frame,
                                     font=med_font,
                                     fg="BLACK",
@@ -1104,7 +1104,7 @@ class OpcListButtons:
                                     command=self.move_up)
         self.moveup_button.grid(sticky="W", row=3, column=7, padx=8, pady=4)
 
-        # Boton move down
+        # Move down button
         self.movedw_button = Button(self.option_frame,
                                     font=med_font,
                                     fg="BLACK",
@@ -1115,7 +1115,7 @@ class OpcListButtons:
                                     command=self.move_dw)
         self.movedw_button.grid(sticky="W", row=4, column=7, padx=8, pady=4)
 
-        # Boton nueva CUE
+        # New CUE button
         self.newcue_button = Button(self.option_frame,
                                     font=med_font,
                                     fg="BLACK",
@@ -1126,7 +1126,7 @@ class OpcListButtons:
                                     command=self.new_cue)
         self.newcue_button.grid(sticky="W", row=5, column=7, padx=8, pady=4)
 
-        # Boton borrar CUE
+        # Delete CUE button
         self.deletecue_button = Button(option_frame,
                                        font=med_font,
                                        fg="BLACK",
@@ -1463,15 +1463,15 @@ class Mesa:
                 print(e)
                 pass
 
-        root.protocol("WM_DELETE_WINDOW", on_closing)  # Al cerrar el programa
+        root.protocol("WM_DELETE_WINDOW", on_closing)  # When closing the program
 
-        # Creamos los distintos frames
+        # Create the different frames
         self.inicializa()
         self.crear_ejecutores()
         self.crear_envios()
         self.crear_opciones()
 
-        # Cramos barra de menus
+        # Create the menu bar
         self.mainmenu = tk.Menu(root, tearoff=0, bg=color_fondos, fg="white")
         root.configure(menu=self.mainmenu)
 
@@ -1490,7 +1490,7 @@ class Mesa:
         # Autosave
         autosave()
 
-    # Funciones para ficheros
+    # File functions
 
     @staticmethod
     def new_show():
@@ -1578,7 +1578,7 @@ class Mesa:
         h_scroll.config(command=help_text.yview)
         tk.mainloop()
 
-    # Crear bloques del programa
+    # Create the program blocks
 
     @staticmethod
     def inicializa():
