@@ -5,6 +5,10 @@ Peramesa is a Tk-based cue control tool for Yamaha digital mixers that speak the
 > NOTE: This project is currently focused on the original author's workflow and mixer setup.
 > Use it at your own risk and always test with your own console before a show.
 
+## Downloads
+
+- **Latest macOS build**: see the [Releases page](https://github.com/PeramatoG/Peramesa/releases/latest).
+
 ---
 
 ## Features
