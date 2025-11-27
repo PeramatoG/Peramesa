@@ -1611,7 +1611,7 @@ class Mesa:
         """Show basic information about the application"""
         about_text = (
             "Peramesa v3.0\n"
-            "Multiplatform OSC controller for mixing consoles.\n\n"
+            "Multiplatform OSC controller for Yamaha mixing consoles.\n\n"
             "Developed by Luisma Peramato using Python and Tkinter.\n"
             "More information:\n"
             "GitHub: https://github.com/PeramatoG/Peramesa\n"
@@ -1687,5 +1687,6 @@ if __name__ == '__main__':
 
     osc_thread()
     root.mainloop()
+
 
 
