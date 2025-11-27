@@ -649,7 +649,7 @@ class Exec:
         # print(event)
         print("Send: ", envio_actual, "Ch:", (self.exec_ch + 1), "At: ", self.exec_value, self.exec_mute, "Mod: ",
               self.exec_mod)
-        print_cmd("TEST MESSAGE")
+        print_cmd("OJETE")
 
     def toggle(self, event):
         """Change the state of the MUTE button"""
@@ -1672,3 +1672,4 @@ if __name__ == '__main__':
 
     osc_thread()
     root.mainloop()
+
