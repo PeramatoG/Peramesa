@@ -10,7 +10,6 @@ from sys import exit  # To close the program
 import time
 import subprocess  # To prevent macOS from putting the app to sleep when minimized
 import platform
-import webbrowser  # To open hyperlinks from the About window
 
 
 from pathlib import Path  # To extract the file name from a file path
@@ -1610,70 +1609,16 @@ class Mesa:
     @staticmethod
     def about_window():
         """Show basic information about the application"""
-        def open_link(url):
-            webbrowser.open(url)
-
-        about = tk.Toplevel(root)
-        about.title("About Peramesa")
-        about.configure(bg=color_fondos)
-        about.resizable(False, False)
-        about.transient(root)
-        about.grab_set()
-
-        tk.Label(
-            about,
-            text="Peramesa v3.0",
-            font=med_font,
-            fg="white",
-            bg=color_fondos,
-        ).pack(pady=(10, 0))
-
-        tk.Label(
-            about,
-            text=(
-                "Multiplatform OSC controller for Yamaha mixing consoles.\n\n"
-                "Developed by Luisma Peramato using Python and Tkinter.\n"
-                "More information:"
-            ),
-            justify=tk.CENTER,
-            fg="white",
-            bg=color_fondos,
-            font=small_font,
-        ).pack(padx=20, pady=(5, 10))
-
-        github_url = "https://github.com/PeramatoG/Peramesa"
-        website_url = "https://luismaperamato.com"
-
-        github_link = tk.Label(
-            about,
-            text=f"GitHub: {github_url}",
-            fg="DeepSkyBlue2",
-            bg=color_fondos,
-            cursor="hand2",
-            font=small_font,
+        about_text = (
+            "Peramesa v3.0\n"
+            "Multiplatform OSC controller for Yamaha mixing consoles.\n\n"
+            "Developed by Luisma Peramato using Python and Tkinter.\n"
+            "More information:\n"
+            "GitHub: https://github.com/PeramatoG/Peramesa\n"
+            "Website: https://luismaperamato.com"
         )
-        github_link.pack(pady=(0, 5))
-        github_link.bind("<Button-1>", lambda _event: open_link(github_url))
 
-        website_link = tk.Label(
-            about,
-            text=f"Website: {website_url}",
-            fg="DeepSkyBlue2",
-            bg=color_fondos,
-            cursor="hand2",
-            font=small_font,
-        )
-        website_link.pack(pady=(0, 10))
-        website_link.bind("<Button-1>", lambda _event: open_link(website_url))
-
-        tk.Button(
-            about,
-            text="Close",
-            command=about.destroy,
-            bg="black",
-            fg="white",
-            font=med_font,
-        ).pack(pady=(0, 10))
+        messagebox.showinfo(title="About Peramesa", message=about_text)
 
     # Create the program blocks
 
