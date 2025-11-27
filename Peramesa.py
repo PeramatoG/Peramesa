@@ -1237,6 +1237,14 @@ class OpcionExtraButtons:
         self.a_send.grid(sticky="W", row=0, column=8, padx=8, pady=4)
         self.a_send.bind('<Button-1>', self.check_color)
 
+        # Connection status indicator
+        self.connection_status = tk.Label(self.option_frame,
+                                          font=small_font,
+                                          fg="WHITE",
+                                          bg=color_fondos,
+                                          text="Ready")
+        self.connection_status.grid(sticky="W", row=0, column=9, padx=8, pady=4)
+
         # Button that sends values
         self.send_button = tk.Label(self.option_frame,
                                   font=med_font,
@@ -1246,7 +1254,7 @@ class OpcionExtraButtons:
                                   #borderless=1,
                                   highlightbackground="WHITE")
         self.send_button.grid(sticky="W", row=1, column=8, padx=8, pady=4)
-        self.send_button.bind('<Button-1>', lambda event: self.conectar_directo(event))
+        self.send_button.bind('<Button-1>', lambda event: self.conectar(event))
 
         # SELECT ALL button
         self.selectall_button = Button(self.option_frame,
@@ -1320,12 +1328,14 @@ class OpcionExtraButtons:
             autosend_global = True
 
     def conectar_directo(self, event):
-        """Try to connect without a parallel thread"""
-        send_values()
+        """Maintain compatibility with previous direct calls"""
+        self.conectar(event)
 
-    def conectar(self, event):
+    def conectar(self, event=None):
         """Attempt to connect and send values to the desk using a parallel thread
         so the UI is not blocked while connecting"""
+        self.connection_status.config(text="Connecting...")
+        root.config(cursor="watch")
         self.send_button["state"] = "disabled"  # Change button state
         self.send_button.config(bg="grey",
                                 highlightbackground="WHITE")
@@ -1346,6 +1356,8 @@ class OpcionExtraButtons:
         # If the thread has finished, restore the button and show a message.
         if not task.is_alive():
             print_cmd("Connection finished")
+            self.connection_status.config(text="Ready")
+            root.config(cursor="")
             # Restore the button.
             self.send_button["state"] = "normal"
             self.send_button.config(bg=light_red,
