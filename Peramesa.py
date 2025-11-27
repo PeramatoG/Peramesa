@@ -362,9 +362,9 @@ def send_values():
         print_cmd("Conectado a " + str(host) + " en el puerto " + str(port))
         print_cmd("Enviando:")
 
-        # Loop para el Master
+        # Loop for the Master send
         for channel in range(0, 64):
-            if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mod:  # Comprueba si hay que enviar el valor
+            if seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mod:  # Check whether the value should be sent
                 ch = channel
                 thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_value)
 
@@ -372,12 +372,12 @@ def send_values():
                     string_fad_on = "set MIXER:Current/InCh/Fader/On {} 0 1\n".format(ch)
                     sock.sendall(string_fad_on.encode())
                 else:
-                    string_fad_off = "set MIXER:Current/InCh/Fader/On {} 0 0\n".format(ch)  # Mutea canal
+                    string_fad_off = "set MIXER:Current/InCh/Fader/On {} 0 0\n".format(ch)  # Mute channel
                     sock.sendall(string_fad_off.encode())
 
 
                 # Send fader values
-                string_level = "set MIXER:Current/InCh/Fader/Level {} 0 {}\n".format(ch, thelevel)  # Ajusta canal
+                string_level = "set MIXER:Current/InCh/Fader/Level {} 0 {}\n".format(ch, thelevel)  # Adjust channel
                 sock.sendall(string_level.encode())
                 print_cmd("MASTER Ch ", ch, seq[0].cue_list[cue_actual].envio[0].canal[channel].ch_mute, " at ",
                           thelevel)
@@ -385,10 +385,10 @@ def send_values():
             else:
                 pass
 
-        # Loop para el resto de los envios
+        # Loop for the rest of the sends
         for send in range(1, 17):
             for channel in range(0, 64):
-                if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mod:  # Comprueba si hay que enviar
+                if seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_mod:  # Check whether it should be sent
                     ch = channel
                     thelevel = fader_rango(seq[0].cue_list[cue_actual].envio[send].canal[channel].ch_value)
                     thesend = send - 1
@@ -529,7 +529,7 @@ class SendsButtons:
         """Select the send"""
         global envio_actual
         envios[envio_actual].send_button.config(bg=color_no_mod)
-        # apaga_boton_envio(self.send_num)
+        # turn_off_send_button(self.send_num)
         envio_actual = self.send_num  # Update current send
         self.send_button.config(bg=color_mod)
         self.send_button.config(highlightbackground="WHITE")
@@ -722,7 +722,7 @@ class Exec:
         else:
             self.fader_label.config(bg=color_no_mod)
 
-        self.fader.set(upd_value)  # Carga valor en el ejecutor
+        self.fader.set(upd_value)  # Load value into the executor
 
 
 class OpcionesNameShowCue:
