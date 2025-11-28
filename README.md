@@ -2,6 +2,8 @@
 
 Peramesa is a Tk-based cue control tool for Yamaha digital mixers that speak the TF-style remote control protocol (default TCP port 49280). It lets you store, edit and send fader levels and mute states for multiple channels and sends, organized in cues, and trigger them manually or via OSC.
 
+![Screenshot of the main Peramesa window](assets/peramesa_screenshot.png)
+
 > NOTE: This project is currently focused on the original author's workflow and mixer setup.
 > Use it at your own risk and always test with your own console before a show.
 
