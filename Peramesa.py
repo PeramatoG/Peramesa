@@ -1461,25 +1461,24 @@ class Mesa:
         icon_set = False
 
         try:
-            if platform.system() == "Darwin":
-                icon_path = icon_dir / "pera.icns"
-                root.wm_iconbitmap(default=str(icon_path))
-                icon_set = True
-            elif platform.system() == "Windows":
+            system = platform.system()
+            if system == "Windows":
+                # Solo Windows usa .ico con iconbitmap
                 icon_path = icon_dir / "peramesa_multi.ico"
-                root.wm_iconbitmap(default=str(icon_path))
+                root.iconbitmap(default=str(icon_path))
                 icon_set = True
+            # En macOS (Darwin) y otros sistemas dejamos que el bundle .icns
+            # marque el icono de la app; no llamamos a wm_iconbitmap.
         except Exception as e:
-            print(e)
+            print("Icon bitmap error:", e)
 
         if not icon_set:
             try:
+                # Fallback genérico: usar el PNG como icono de ventana
                 img = tk.Image("photo", file=str(icon_dir / "peramesa.png"))
-                root.iconphoto(True, img)  # you may also want to try this.
-                root.tk.call('wm', 'iconphoto', root._w, img)
+                root.iconphoto(True, img)
             except Exception as e:
-                print(e)
-                pass
+                print("Icon photo error:", e)
 
         root.protocol("WM_DELETE_WINDOW", on_closing)  # When closing the program
 
