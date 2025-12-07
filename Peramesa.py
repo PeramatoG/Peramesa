@@ -213,42 +213,60 @@ def monta_show(datos):
     global show
     global cue_actual
 
+    expected_columns = 1 + (17 * 64 * 3)  # Cue name + 17 sends * 64 channels * (value, mute, mod)
+
+    def to_bool(value):
+        return str(value).strip().lower() in ("true", "1", "yes", "on")
+
     i_cue = 0
 
     # Build the show with the data
     app.new_show()  # Clear the current show
     lineas = datos.splitlines()  # Split the data into lines
+    if not lineas:
+        print_cmd("Show file is empty; nothing to load")
+        return
+
     show = lineas[0]  # Update show name
     show_name_update()  # Update show label
 
     linea = []  # Create a list to store the data
+    cue_lines = [line for line in lineas[1:] if line.strip()]
 
-    for i in range(0, (len(lineas)) - 2):
+    for _ in range(len(cue_lines) - 1):
         seq[0].cue_list.append(Cue())  # Create a new cue
 
-    for i in range(1, len(lineas)):
+    for raw_line in cue_lines:
         linea[:] = []  # Clear the list
         columna = 1  # Helper to count the column in the file
 
-        linea = lineas[i].split(";")  # Split the current line into groups
-        seq[0].cue_list[i_cue].cue_name = str(linea[0])
+        linea = raw_line.split(";")  # Split the current line into groups
+
+        if len(linea) < expected_columns:
+            print_cmd(
+                f"Cue {i_cue}: missing {expected_columns - len(linea)} columns; filling with defaults"
+            )
+        elif len(linea) > expected_columns:
+            print_cmd(
+                f"Cue {i_cue}: ignoring {len(linea) - expected_columns} extra columns from file"
+            )
+
+        seq[0].cue_list[i_cue].cue_name = str(linea[0]) if linea else f"CUE {i_cue}"
 
         #  Start loop to fill values in channels
         for j in range(0, 17):
             for k in range(0, 64):
-                seq[0].cue_list[i_cue].envio[j].canal[k].ch_value = linea[columna]
+                value = linea[columna] if columna < len(linea) else 0
                 columna += 1
-                seq[0].cue_list[i_cue].envio[j].canal[k].ch_mute = linea[columna]
+                mute = linea[columna] if columna < len(linea) else "MUTE"
                 columna += 1
-                # Convert text line to boolean values
-                if linea[columna] == "True":
-                    aux = True
-                else:
-                    aux = False
+                mod_raw = linea[columna] if columna < len(linea) else False
+                columna += 1
 
-                seq[0].cue_list[i_cue].envio[j].canal[k].ch_mod = aux
+                seq[0].cue_list[i_cue].envio[j].canal[k].ch_value = value
+                seq[0].cue_list[i_cue].envio[j].canal[k].ch_mute = mute
+                seq[0].cue_list[i_cue].envio[j].canal[k].ch_mod = to_bool(mod_raw)
 
-                columna += 1
         i_cue += 1
 
     cue_actual = 0
